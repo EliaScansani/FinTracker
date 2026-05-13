@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTracker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Lightweight Charts — libreria TradingView per grafici finanziari -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+    <!-- ─────────────── SIDEBAR ─────────────── -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-text">FinTracker</div>
+            <div class="logo-sub">Sistema di analisi personale</div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Navigazione</div>
+            <button class="nav-link active" data-pagina="dashboard">
+                <span class="nav-icon">⬡</span> Dashboard
+            </button>
+            <button class="nav-link" data-pagina="watchlist">
+                <span class="nav-icon">◈</span> Watchlist
+            </button>
+            <button class="nav-link" data-pagina="grafici">
+                <span class="nav-icon">◳</span> Grafici
+            </button>
+            <button class="nav-link" data-pagina="notizie">
+                <span class="nav-icon">◎</span> Notizie
+            </button>
+            <button class="nav-link" data-pagina="segnali">
+                <span class="nav-icon">◉</span> Segnali
+            </button>
+        </nav>
+
+        <div class="sidebar-actions">
+            <div class="nav-section-label" style="padding: 0 8px; margin-bottom: 10px">Azioni rapide</div>
+            <button class="btn-sidebar" data-azione="aggiorna-prezzi" onclick="azioneSidebar('aggiorna-prezzi')">
+                ↻ Aggiorna prezzi
+            </button>
+            <button class="btn-sidebar" data-azione="aggiorna-notizie" onclick="azioneSidebar('aggiorna-notizie')">
+                ↻ Aggiorna notizie
+            </button>
+            <button class="btn-sidebar" data-azione="analisi-tecnica" onclick="azioneSidebar('analisi-tecnica')">
+                ◈ Analisi tecnica
+            </button>
+            <button class="btn-sidebar" data-azione="invia-telegram" onclick="azioneSidebar('invia-telegram')">
+                ✈ Invia riepilogo Telegram
+            </button>
+        </div>
+    </aside>
+
+    <!-- ─────────────── MAIN ─────────────── -->
+    <div class="main">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-title" id="topbar-title">Dashboard</div>
+            <div class="topbar-date" id="topbar-date"></div>
+        </header>
+
+        <!-- Contenuto -->
+        <div class="content">
+
+
+            <!-- DASHBOARD -->
+            <section class="pagina" id="pagina-dashboard">
+                <div class="prezzi-grid" id="prezzi-grid"></div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-title">🔔 Segnali importanti oggi</div>
+                        <div id="segnali-preview"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">📰 Notizie di oggi</div>
+                        <div id="notizie-preview"></div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- WATCHLIST -->
+            <section class="pagina hidden" id="pagina-watchlist">
+                <div class="cerca-wrapper">
+                    <div class="cerca-bar">
+                        <div class="input-group">
+                            <label class="input-label">Cerca ticker</label>
+                            <input
+                                type="text"
+                                id="cerca-input"
+                                class="input-field"
+                                placeholder="Es: Amazon, Apple, Tesla..."
+                                oninput="cercaTicker(this.value)"
+                                autocomplete="off"
+                            >
+                        </div>
+                        <div class="input-group" style="max-width: 200px">
+                            <label class="input-label">Note</label>
+                            <input type="text" id="note-input" class="input-field" placeholder="opzionale">
+                        </div>
+                        <button class="btn-primary" onclick="aggiungiTicker()">+ Aggiungi</button>
+                    </div>
+                    <div class="cerca-risultati hidden" id="cerca-risultati"></div>
+                </div>
+
+                <div id="watchlist-table"></div>
+            </section>
+
+
+            <!-- GRAFICI -->
+            <section class="pagina hidden" id="pagina-grafici">
+                <div class="grafici-controls">
+                    <select id="ticker-select" class="select-field" onchange="cambiaGrafico()"></select>
+                    <select id="periodo-select" class="select-field" onchange="cambiaGrafico()">
+                        <option value="1mo">1 mese</option>
+                        <option value="3mo">3 mesi</option>
+                        <option value="6mo" selected>6 mesi</option>
+                        <option value="1y">1 anno</option>
+                        <option value="2y">2 anni</option>
+                    </select>
+                    <select id="tipo-grafico" class="select-field" onchange="cambiaGrafico()">
+                        <option value="candlestick">Candlestick</option>
+                        <option value="linea">Linea</option>
+                        <option value="area">Area</option>
+                        <option value="barre">Barre</option>
+                    </select>
+                </div>
+
+                <div class="indicatori-toggle">
+                    <span class="indicatori-label">Indicatori:</span>
+                    <button class="toggle-ind active" data-ind="sma20"    onclick="toggleIndicatore('sma20')">SMA 20</button>
+                    <button class="toggle-ind active" data-ind="sma50"    onclick="toggleIndicatore('sma50')">SMA 50</button>
+                    <button class="toggle-ind active" data-ind="bollinger" onclick="toggleIndicatore('bollinger')">Bollinger</button>
+                    <button class="toggle-ind active" data-ind="volume"   onclick="toggleIndicatore('volume')">Volume</button>
+                    <button class="toggle-ind active" data-ind="rsi"      onclick="toggleIndicatore('rsi')">RSI</button>
+                </div>
+
+                <div class="grafico-section">
+                    <div class="grafico-label">Grafico prezzi + SMA20/50</div>
+                    <div class="grafico-desc">SMA 20: media mobile semplice a 20 giorni — indica il trend di breve periodo. Se il prezzo è sopra la SMA20 il trend è rialzista. 
+                         SMA50: media mobile semplice a 50 giorni — indica il trend di medio periodo. Se SMA20 incrocia SMA50 verso l'alto è un segnale rialzista </div>
+                    <div id="grafico-container"></div>
+                </div> 
+
+                <div class="grafico-section">
+                    <div class="grafico-header">
+                        <div class="grafico-label">Volume</div>
+                        <div class="grafico-desc">
+                            Numero di azioni scambiate in ogni giornata.
+                            Un volume elevato conferma la forza di un movimento di prezzo —
+                            un rialzo con alto volume è più affidabile di uno con volume basso.
+                        </div>
+                    </div>
+                    <div id="volume-container"></div>
+                </div>
+
+                <!-- RSI Chart -->
+                <div class="grafico-section">
+                    <div class="grafico-header">
+                        <div class="grafico-label">RSI — Relative Strength Index - 14 periodi</div>
+                        <div class="grafico-desc">
+                            Oscilla tra 0 e 100. Sopra <span class="desc-red">70</span> il titolo è considerato
+                            <strong>ipercomprato</strong> (possibile correzione), sotto <span class="desc-green">30</span>
+                            è <strong>ipervenduto</strong> (possibile rimbalzo). Zona 40–60 = neutrale.
+                        </div>
+                    </div>
+                    <div id="rsi-container"></div>
+                </div>
+            </section>
+
+
+            <!-- NOTIZIE -->
+            <section class="pagina hidden" id="pagina-notizie">
+                <div class="notizie-controls">
+                    <select id="filtro-ticker-notizie" class="select-field" onchange="filtraNotizie()">
+                        <option value="">Tutti i ticker</option>
+                    </select>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-storico-notizie" class="toggle-input" onchange="filtraNotizie()">
+                        <span class="toggle-track"></span>
+                        Mostra storico 7 giorni
+                    </label>
+                </div>
+                <div id="notizie-list"></div>
+            </section>
+
+
+            <!-- SEGNALI -->
+            <section class="pagina hidden" id="pagina-segnali">
+                <div class="segnali-controls">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-storico-segnali" class="toggle-input" onchange="filtraSegnali()">
+                        <span class="toggle-track"></span>
+                        Storico 30 giorni
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-importanti" class="toggle-input" onchange="filtraSegnali()">
+                        <span class="toggle-track"></span>
+                        Solo importanti
+                    </label>
+                </div>
+                <div id="segnali-list"></div>
+            </section>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Script come moduli ES6 -->
+<script type="module" src="/js/dashboard.js"></script>
+
+<script>
+    // Aggiorna data nella topbar
+    const titoli = {
+        dashboard: "Dashboard",
+        watchlist: "Watchlist",
+        grafici: "Grafici",
+        notizie: "Notizie",
+        segnali: "Segnali Tecnici"
+    };
+
+    // Data aggiornata
+    document.getElementById("topbar-date").textContent =
+        new Date().toLocaleDateString("it-IT", {
+            weekday: "long", day: "numeric",
+            month: "long", year: "numeric"
+        });
+
+    // Aggiorna titolo topbar alla navigazione
+    document.querySelectorAll(".nav-link").forEach(link => {
+        link.addEventListener("click", () => {
+            document.getElementById("topbar-title").textContent =
+                titoli[link.dataset.pagina] || "";
+        });
+    });
+
+    // Carica i ticker nella select delle notizie dopo il DOM
+    window.addEventListener("load", async () => {
+        try {
+            const r = await fetch("/api/watchlist/");
+            const data = await r.json();
+            const sel = document.getElementById("filtro-ticker-notizie");
+            data.forEach(w => {
+                const opt = document.createElement("option");
+                opt.value = w.ticker;
+                opt.textContent = w.ticker;
+                sel.appendChild(opt);
+            });
+        } catch {}
+    });
+</script>
+
+</body>
+</html>
