@@ -27,7 +27,7 @@ A personal financial monitoring system that tracks stocks, generates technical a
 
 | Dashboard | Charts | Signals |
 |-----------|--------|---------|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Charts](docs/screenshots/charts.png) | ![Signals](docs/screenshots/signals.png) |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Charts](docs/screenshots/charts_volume_rsi.png) | ![Signals](docs/screenshots/signals.png) |
 
 ---
 
